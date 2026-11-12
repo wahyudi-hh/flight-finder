@@ -1,6 +1,7 @@
 package batikair
 
 import (
+	"flight-finder/internal/airport"
 	"flight-finder/internal/domain"
 	"fmt"
 	"strings"
@@ -31,6 +32,18 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 		return domain.Flight{}, fmt.Errorf("invalid arrival time for %s: %w", flight.ArrivalDateTime, err)
 	}
 
+	airportData, ok := airport.Lookup(flight.Origin)
+	fromCity := ""
+	if ok {
+		fromCity = airportData.City
+	}
+
+	airportData, ok = airport.Lookup(flight.Destination)
+	toCity := ""
+	if ok {
+		toCity = airportData.City
+	}
+
 	duration, err := time.ParseDuration(strings.ReplaceAll(flight.TravelTime, " ", ""))
 	if err != nil {
         return domain.Flight{}, fmt.Errorf("invalid travel duration for %s: %w", flight.FlightNumber, err)
@@ -46,10 +59,12 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 		FlightNumber: flight.FlightNumber,
 		Departure: domain.Schedule{
 			Airport: flight.Origin,
+			City: fromCity,
 			DateTime: departure,
 		},
 		Arrival: domain.Schedule{
 			Airport: flight.Destination,
+			City: toCity,
 			DateTime: arrival,
 		},
 		DurationMinute: int(duration.Minutes()),

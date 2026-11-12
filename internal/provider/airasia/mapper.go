@@ -1,6 +1,7 @@
 package airasia
 
 import (
+	"flight-finder/internal/airport"
 	"flight-finder/internal/domain"
 	"fmt"
 	"math"
@@ -34,6 +35,18 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 		return domain.Flight{}, fmt.Errorf("invalid arrival time for %s: %w", flight.FlightCode, err)
 	}
 
+	airportData, ok := airport.Lookup(flight.FromAirport)
+	fromCity := ""
+	if ok {
+		fromCity = airportData.City
+	}
+
+	airportData, ok = airport.Lookup(flight.ToAirport)
+	toCity := ""
+	if ok {
+		toCity = airportData.City
+	}
+
 	durationMinutes := int(math.Ceil(flight.DurationHours * 60))
 
 	stops := 0
@@ -51,10 +64,12 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 		FlightNumber: flight.FlightCode,
 		Departure: domain.Schedule{
 			Airport: flight.FromAirport,
+			City: fromCity,
 			DateTime: departure,
 		},
 		Arrival: domain.Schedule{
 			Airport: flight.ToAirport,
+			City: toCity, 
 			DateTime: arrival,
 		},
 		DurationMinute: durationMinutes,
