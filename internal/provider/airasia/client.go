@@ -14,7 +14,6 @@ import (
 const (
 	minDelay = 50 * time.Millisecond
 	maxDelay = 150 * time.Millisecond
-	// failureRate = 0.10
 )
 
 type Client struct {
