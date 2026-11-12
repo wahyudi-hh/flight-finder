@@ -54,7 +54,7 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 			City: flight.Route.To.City,
 			DateTime: arrival,
 		},
-		DurationMinute: flight.FlightTime,
+		Duration: domain.NewDuration(flight.FlightTime),
 		Stops: stops,
 		Price: domain.Price{
 			Amount: flight.Pricing.Total,

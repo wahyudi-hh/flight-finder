@@ -1,42 +1,60 @@
 package domain
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Flight struct {
-	ID					string
-	Provider			string
-	Airline				Airline
-	FlightNumber		string
-	Departure			Schedule
-	Arrival				Schedule
-	DurationMinute		int
-	Stops				int
-	Price				Price
-	AvailableSeats		int
-	CabinClass			string
-	Aircraft			*string
-	Amenities			[]string
-	Baggage				Baggage
+	ID				string		`json:"id"`
+	Provider		string		`json:"provider"`
+	Airline			Airline		`json:"airline"`
+	FlightNumber	string		`json:"flight_number"`
+	Departure		Schedule	`json:"departure"`
+	Arrival			Schedule	`json:"arrival"`
+	Duration		Duration	`json:"duration"`
+	Stops			int			`json:"stops"`
+	Price			Price		`json:"price"`
+	AvailableSeats	int			`json:"available_seats"`
+	CabinClass		string		`json:"cabin_class"`
+	Aircraft		*string		`json:"aircraft"`
+	Amenities		[]string	`json:"baggage"`
+	Baggage			Baggage		`json:"amenities"`
 }
 
 type Airline struct {
-	Name	string
-	Code	string
+	Name	string	`json:"name"`
+	Code	string	`json:"code"`
 }
 
 type Schedule struct {
-	Airport		string
-	City		string
-	DateTime	time.Time
+	Airport		string		`json:"airport"`
+	City		string		`json:"city"`
+	DateTime	time.Time	`json:"datetime"`
+	Timestamp	int64		`json:"timestamp"`
+}
+
+type Duration struct {
+	TotalMinutes	int		`json:"total_minutes"`
+	Formatted		string	`json:"formatted"`
 }
 
 type Price struct {
-	Amount		int64
-	Currency	string
+	Amount		int64	`json:"amount"`
+	Currency	string	`json:"currency"`
 }
 
 type Baggage struct {
-	CarryOn	string
-	Checked	string
+	CarryOn	string	`json:"carry_on"`
+	Checked	string	`json:"checked"`
 }
 
+func NewDuration(totalMinutes int) Duration {
+    hours := totalMinutes / 60
+    minutes := totalMinutes % 60
+
+    return Duration{
+        TotalMinutes: totalMinutes,
+        Formatted:    fmt.Sprintf("%dh %dm", hours, minutes),
+    }
+}
