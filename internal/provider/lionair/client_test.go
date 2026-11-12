@@ -22,8 +22,7 @@ func TestClient_Search_Success(t *testing.T) {
     require.NoError(t, err)
     require.NotNil(t, response)
 
-    assert.True(t, response.Success)
-    assert.NotEmpty(t, response.Data.AvailableFlights)
+    assert.NotEmpty(t, response)
 }
 
 func TestClient_Search_ContextCancelled(t *testing.T) {

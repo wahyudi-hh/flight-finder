@@ -22,9 +22,7 @@ func TestClient_Search_Success(t *testing.T) {
     require.NoError(t, err)
     require.NotNil(t, response)
 
-    assert.Equal(t, 200, response.Code)
-    assert.Equal(t, "OK", response.Message)
-    assert.NotEmpty(t, response.Results)
+    assert.NotEmpty(t, response)
 }
 
 func TestClient_Search_ContextCancelled(t *testing.T) {

@@ -31,6 +31,11 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 		return domain.Flight{}, fmt.Errorf("invalid arrival time for %s: %w", flight.Id, err)
 	}
 
+	stops := 0
+	if flight.StopCount != nil {
+		stops = *flight.StopCount
+	}
+
 	return domain.Flight{
 		ID: flight.Id + "_" + strings.ReplaceAll(flight.Carrier.Name, " ", ""),
 		Provider: flight.Carrier.Name,
@@ -50,7 +55,7 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 			DateTime: arrival,
 		},
 		DurationMinute: flight.FlightTime,
-		Stops: *flight.StopCount,
+		Stops: stops,
 		Price: domain.Price{
 			Amount: flight.Pricing.Total,
 			Currency: flight.Pricing.Currency,

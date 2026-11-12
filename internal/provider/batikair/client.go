@@ -3,6 +3,7 @@ package batikair
 import (
 	"context"
 	"encoding/json"
+	"flight-finder/internal/domain"
 	"flight-finder/internal/provider"
 	"flight-finder/internal/provider/mockdata"
 	"fmt"
@@ -25,7 +26,7 @@ func (c *Client) Name() string {
 	return "Batik Air"
 }
 
-func (c *Client) Search (ctx context.Context, request provider.SearchRequest) (*SearchResponse, error) {
+func (c *Client) Search (ctx context.Context, request provider.SearchRequest) ([]domain.Flight, error) {
 	delay := minDelay + time.Duration(rand.Int63n(int64(maxDelay - minDelay)))
 
 	timer := time.NewTimer(delay)
@@ -42,10 +43,10 @@ func (c *Client) Search (ctx context.Context, request provider.SearchRequest) (*
 		return nil, fmt.Errorf("read Batik Air mock response: %w", err)
 	}
 
-	var response SearchResponse
+	response := &SearchResponse{}
 	if err := json.Unmarshal(data, &response); err != nil {
 		return nil, fmt.Errorf("unmarshal Batik Air response: %w", err)
 	}
 
-	return &response, nil
+	return response.ToFlightDomain()
 }

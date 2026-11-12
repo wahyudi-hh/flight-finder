@@ -22,8 +22,7 @@ func TestClient_Search_Success(t *testing.T) {
     require.NoError(t, err)
     require.NotNil(t, response)
 
-    assert.Equal(t, "ok", response.Status)
-    assert.NotEmpty(t, response.Flights)
+    assert.NotEmpty(t, response)
 }
 
 func TestClient_Search_Failure(t *testing.T) {
