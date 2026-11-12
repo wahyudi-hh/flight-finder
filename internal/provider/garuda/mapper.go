@@ -52,6 +52,7 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 		arrivalSchedule.Airport = lastSegment.Arrival.Airport
 		arrivalSchedule.City = lastSegment.Arrival.City
 		arrivalSchedule.DateTime = arrival
+		arrivalSchedule.Timestamp = arrival.Unix()
 
 		durationMinutes = 0
 		for _, segment := range flight.Segments {
@@ -74,6 +75,7 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 			Airport: flight.Departure.Airport,
 			City: flight.Departure.City,
 			DateTime: departure,
+			Timestamp: departure.Unix(),
 		},
 		Arrival: arrivalSchedule,
 		Duration: domain.NewDuration(durationMinutes),

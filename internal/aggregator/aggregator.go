@@ -26,7 +26,8 @@ type providerResult struct {
 
 type SearchResult struct {
 	Flights 		[]domain.Flight
-	FailedProviders	[]string
+	FailedProviders	int
+	TotalProviders	int
 }
 
 func (a *Aggregator) Search(ctx context.Context, request provider.SearchRequest) (*SearchResult, error) {
@@ -70,9 +71,10 @@ func (a *Aggregator) Search(ctx context.Context, request provider.SearchRequest)
 	if len(failedProviders) == len(a.providers) {
 		return nil, fmt.Errorf("all flight providers failed")
 	}
-	
+
 	return &SearchResult {
 		Flights: allFlights,
-		FailedProviders: failedProviders,
+		FailedProviders: len(failedProviders),
+		TotalProviders: len(a.providers),
 	}, nil
 }

@@ -61,11 +61,13 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 			Airport: flight.Origin,
 			City: fromCity,
 			DateTime: departure,
+			Timestamp: departure.Unix(),
 		},
 		Arrival: domain.Schedule{
 			Airport: flight.Destination,
 			City: toCity,
 			DateTime: arrival,
+			Timestamp: arrival.Unix(),
 		},
 		Duration: domain.NewDuration(int(duration.Minutes())),
 		Stops: flight.NumberOfStops,

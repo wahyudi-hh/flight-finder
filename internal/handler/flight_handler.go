@@ -52,7 +52,7 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 		searchRequest.ReturnDate = &request.ReturnDate
 	}
 
-	result, err := h.service.Search(r.Context(), searchRequest)
+	result, searchTimeMs, err := h.service.Search(r.Context(), searchRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
@@ -60,7 +60,19 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusOK)
 
-	if err := json.NewEncoder(w).Encode(result); err != nil {
+	response := FlightSearchResponse {
+		SearchCriteria: request,
+		Metadata: SearchMetadata{
+			TotalResults: len(result.Flights),
+			ProvidersQueried: result.TotalProviders,
+			ProvidersSucceeded: result.TotalProviders - result.FailedProviders,
+			ProvidersFailed: result.FailedProviders,
+			SearchTimeMs: searchTimeMs,
+		},
+		Flights: result.Flights,
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		return
 	}
 }
