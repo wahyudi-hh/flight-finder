@@ -1,7 +1,7 @@
 package batikair
 
 type SearchResponse struct {
-    Code    string          `json:"code"`
+    Code    int          `json:"code"`
     Message string          `json:"message"`
     Results []FlightData    `json:"results"`
 }
