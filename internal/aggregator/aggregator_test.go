@@ -73,7 +73,7 @@ func TestAggregator_Search_PartialFailure(t *testing.T) {
 
     assert.Len(t, result.Flights, 1)
     assert.Equal(t, "GA001", result.Flights[0].ID)
-    assert.Equal(t, []string{"Lion Air"}, result.FailedProviders)
+    assert.Equal(t, 1, result.FailedProviders)
 }
 
 func TestAggregator_Search_AllProvidersFail(t *testing.T) {

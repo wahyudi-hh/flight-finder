@@ -52,7 +52,13 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 		searchRequest.ReturnDate = &request.ReturnDate
 	}
 
-	result, searchTimeMs, err := h.service.Search(r.Context(), searchRequest)
+	filter, err := request.ToFilter(r.URL.Query())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	result, searchTimeMs, err := h.service.Search(r.Context(), searchRequest, filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
