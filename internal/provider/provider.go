@@ -15,5 +15,6 @@ type SearchRequest struct {
 }
 
 type Provider interface {
+	Name() string
 	Search(ctx context.Context, request SearchRequest) ([]domain.Flight, error)
 }

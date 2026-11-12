@@ -21,6 +21,10 @@ func NewClient() *Client{
 	return &Client{}
 }
 
+func (c *Client) Name() string {
+	return "Garuda Indonesia"
+}
+
 func (c *Client) Search (ctx context.Context, request provider.SearchRequest) (*SearchResponse, error) {
 	delay := minDelay + time.Duration(rand.Int63n(int64(maxDelay - minDelay)))
 

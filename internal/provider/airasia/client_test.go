@@ -9,6 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_Name(t *testing.T) {
+    client := &Client{failureRate: 0}
+    assert.Equal(t, "AirAsia", client.Name())
+}
+
 func TestClient_Search_Success(t *testing.T) {
     client := &Client{failureRate: 0}
 
