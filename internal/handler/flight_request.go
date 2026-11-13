@@ -107,7 +107,7 @@ func (r FlightSearchRequest) ToFilter(query url.Values) (search.FlightFilter, er
 func (r FlightSearchRequest) ToSort(query url.Values) (search.FlightSort, error) {
 	sortBy := query.Get("sortBy")
 	if sortBy == "" {
-		sortBy = string(search.Price)
+		sortBy = string(search.SortByBestValue)
 	}
 
 	sortOrder := query.Get("sortOrder")
