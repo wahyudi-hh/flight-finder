@@ -2,9 +2,11 @@ package aggregator
 
 import (
 	"context"
+	"errors"
 	"flight-finder/internal/domain"
 	"flight-finder/internal/provider"
 	"fmt"
+	"time"
 )
 
 type Aggregator struct {
@@ -39,7 +41,7 @@ func (a *Aggregator) Search(ctx context.Context, request provider.SearchRequest)
 
 	for i, p := range a.providers {
 		go func (index int, currProvider provider.Provider) {
-			flights, err := currProvider.Search(ctx, request)
+			flights, err := searchWithRetry(ctx, currProvider, request)
 			
 			results <- providerResult{
 				index: index,
@@ -77,4 +79,59 @@ func (a *Aggregator) Search(ctx context.Context, request provider.SearchRequest)
 		FailedProviders: len(failedProviders),
 		TotalProviders: len(a.providers),
 	}, nil
+}
+
+const (
+	maxAttempts = 2
+	initialBackoff = 100 * time.Millisecond
+	providerTimeout = 1 * time.Second
+)
+
+func searchWithRetry(
+	ctx context.Context,
+	currProvider provider.Provider,
+	request provider.SearchRequest,
+) ([]domain.Flight, error) {
+	var flights []domain.Flight
+	var err error
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		flights, err = searchWithTimeout(ctx, currProvider, request)
+		if err == nil {
+			return flights, nil
+		}
+
+		if ctx.Err() != nil || errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+
+		if attempt == maxAttempts {
+			break;
+		}
+		backoff := initialBackoff * time.Duration(1 << (attempt - 1))
+
+		timer := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return nil, err
+}
+
+func searchWithTimeout(
+    ctx context.Context,
+    currProvider provider.Provider,
+    request provider.SearchRequest,
+) ([]domain.Flight, error) {
+    attemptCtx, cancel := context.WithTimeout(ctx, providerTimeout)
+    defer cancel()
+
+    return currProvider.Search(attemptCtx, request)
 }

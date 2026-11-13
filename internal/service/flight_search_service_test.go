@@ -22,15 +22,19 @@ type serviceTestProvider struct {
 	err     error
 	calls   int
 	request provider.SearchRequest
+	search  func(context.Context, provider.SearchRequest) ([]domain.Flight, error)
 }
 
 func (p *serviceTestProvider) Name() string {
 	return p.name
 }
 
-func (p *serviceTestProvider) Search(_ context.Context, request provider.SearchRequest) ([]domain.Flight, error) {
+func (p *serviceTestProvider) Search(ctx context.Context, request provider.SearchRequest) ([]domain.Flight, error) {
 	p.calls++
 	p.request = request
+	if p.search != nil {
+		return p.search(ctx, request)
+	}
 	return p.flights, p.err
 }
 
@@ -112,7 +116,7 @@ func TestFlightSearchService_SearchDoesNotCachePartialFailure(t *testing.T) {
 	}
 
 	assert.Equal(t, 2, successfulProvider.calls)
-	assert.Equal(t, 2, failedProvider.calls)
+	assert.Equal(t, 4, failedProvider.calls, "failed provider should be retried on each search")
 }
 
 func TestFlightSearchService_SearchAllProvidersFail(t *testing.T) {
@@ -131,6 +135,7 @@ func TestFlightSearchService_SearchAllProvidersFail(t *testing.T) {
 	assert.Nil(t, result)
 	assert.GreaterOrEqual(t, elapsed, int64(0))
 	assert.False(t, cacheHit)
+	assert.Equal(t, 2, fakeProvider.calls, "provider should be retried once")
 }
 
 func TestFlightSearchService_SearchNoProviders(t *testing.T) {
@@ -147,6 +152,37 @@ func TestFlightSearchService_SearchNoProviders(t *testing.T) {
 	assert.EqualError(t, err, "no flight providers configured")
 	assert.Nil(t, result)
 	assert.False(t, cacheHit)
+}
+
+func TestFlightSearchService_SearchRetriesTransientProviderError(t *testing.T) {
+	request := provider.SearchRequest{Origin: "CGK", Destination: "DPS", DepartureDate: "2026-12-01", Passengers: 1}
+	attempts := 0
+	fakeProvider := &serviceTestProvider{
+		name: "recovering provider",
+		search: func(_ context.Context, _ provider.SearchRequest) ([]domain.Flight, error) {
+			attempts++
+			if attempts == 1 {
+				return nil, errors.New("temporary provider failure")
+			}
+			return []domain.Flight{{ID: "recovered"}}, nil
+		},
+	}
+	flightService := newTestFlightSearchService(fakeProvider)
+
+	result, _, cacheHit, err := flightService.Search(
+		context.Background(),
+		request,
+		search.FlightFilter{},
+		search.FlightSort{By: search.SortByBestValue, Order: search.Ascending},
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, cacheHit)
+	assert.Equal(t, 2, fakeProvider.calls)
+	assert.Zero(t, result.FailedProviders)
+	require.Len(t, result.Flights, 1)
+	assert.Equal(t, "recovered", result.Flights[0].ID)
 }
 
 func TestCloneSearchResult(t *testing.T) {

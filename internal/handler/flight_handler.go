@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"flight-finder/internal/provider"
 	"flight-finder/internal/service"
 	"net/http"
 	"strconv"
+	"time"
 )
+
+const requestTimeout = 3 * time.Second
 
 type FlightHandler struct {
 	service *service.FlightSearchService
@@ -63,7 +67,9 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, searchTimeMs, cacheHit, err := h.service.Search(r.Context(), searchRequest, filter, sort)
+	ctx, cancel := context.WithTimeout(r.Context(), requestTimeout)
+	defer cancel()
+	result, searchTimeMs, cacheHit, err := h.service.Search(ctx, searchRequest, filter, sort)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
