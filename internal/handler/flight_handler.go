@@ -57,8 +57,13 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	sort, err := request.ToSort(r.URL.Query())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return		
+	}
 
-	result, searchTimeMs, err := h.service.Search(r.Context(), searchRequest, filter)
+	result, searchTimeMs, err := h.service.Search(r.Context(), searchRequest, filter, sort)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
