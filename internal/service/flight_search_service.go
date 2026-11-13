@@ -22,6 +22,7 @@ func (s *FlightSearchService) Search(
 	ctx context.Context,
 	request provider.SearchRequest,
 	filter search.FlightFilter,
+	sort search.FlightSort,
 ) (*aggregator.SearchResult, int64, error){
 	start := time.Now()
 	
@@ -34,6 +35,7 @@ func (s *FlightSearchService) Search(
 	}
 
 	result.Flights = search.FilterFlights(result.Flights, filter)
-	
+	result.Flights = search.SortFlights(result.Flights, sort)
+
 	return result, searchTimeMs, nil
 }

@@ -35,6 +35,7 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 		Airport: flight.Arrival.Airport,
 		City: flight.Arrival.City,
 		DateTime: arrival,
+		Timestamp: arrival.Unix(),
 	}
 
 	durationMinutes := flight.DurationMinutes

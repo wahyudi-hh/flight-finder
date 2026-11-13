@@ -103,3 +103,25 @@ func (r FlightSearchRequest) ToFilter(query url.Values) (search.FlightFilter, er
 
     return filter, nil
 }
+
+func (r FlightSearchRequest) ToSort(query url.Values) (search.FlightSort, error) {
+	sortBy := query.Get("sortBy")
+	if sortBy == "" {
+		sortBy = string(search.Price)
+	}
+
+	sortOrder := query.Get("sortOrder")
+	if sortOrder == "" {
+		sortOrder = string(search.Ascending)
+	}
+
+	sort := search.FlightSort {
+		By: search.SortBy(sortBy),
+		Order: search.SortOrder(sortOrder),
+	}
+
+	if !sort.IsValid() {
+		return search.FlightSort{}, fmt.Errorf("invalid sorting parameter(s)")		
+	}
+	return sort, nil
+}
