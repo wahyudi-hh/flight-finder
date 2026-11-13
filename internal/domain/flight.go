@@ -18,8 +18,9 @@ type Flight struct {
 	AvailableSeats	int			`json:"available_seats"`
 	CabinClass		string		`json:"cabin_class"`
 	Aircraft		*string		`json:"aircraft"`
-	Amenities		[]string	`json:"baggage"`
-	Baggage			Baggage		`json:"amenities"`
+	Amenities		[]string	`json:"amenities"`
+	Baggage			Baggage		`json:"baggage"`
+
 }
 
 type Airline struct {
