@@ -63,7 +63,7 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return		
 	}
 
-	result, searchTimeMs, err := h.service.Search(r.Context(), searchRequest, filter, sort)
+	result, searchTimeMs, cacheHit, err := h.service.Search(r.Context(), searchRequest, filter, sort)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
@@ -79,6 +79,7 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 			ProvidersSucceeded: result.TotalProviders - result.FailedProviders,
 			ProvidersFailed: result.FailedProviders,
 			SearchTimeMs: searchTimeMs,
+			CacheHit: cacheHit,
 		},
 		Flights: result.Flights,
 	}

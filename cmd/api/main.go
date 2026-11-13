@@ -2,6 +2,7 @@ package main
 
 import (
 	"flight-finder/internal/aggregator"
+	"flight-finder/internal/cache"
 	"flight-finder/internal/handler"
 	"flight-finder/internal/provider/airasia"
 	"flight-finder/internal/provider/batikair"
@@ -22,7 +23,9 @@ func main() {
 		lionair.NewClient(),
 	)
 
-	flightService := service.NewFlightSearchService(flightAggregator)
+	flightCache := cache.NewInMemoryCache()
+
+	flightService := service.NewFlightSearchService(flightAggregator, flightCache)
 
 	flightHandler := handler.NewFlightHandler(flightService)
 
