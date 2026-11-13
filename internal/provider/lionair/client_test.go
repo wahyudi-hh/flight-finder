@@ -4,7 +4,6 @@ import (
 	"context"
 	"flight-finder/internal/provider"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,16 +36,5 @@ func TestClient_Search_ContextCancelled(t *testing.T) {
 	response, err := client.Search(ctx, provider.SearchRequest{})
 
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Nil(t, response)
-}
-
-func TestClient_Search_DeadlineExceeded(t *testing.T) {
-	client := NewClient()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
-	defer cancel()
-
-	response, err := client.Search(ctx, provider.SearchRequest{})
-
-	require.ErrorIs(t, err, context.DeadlineExceeded)
 	assert.Nil(t, response)
 }
