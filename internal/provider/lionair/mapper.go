@@ -10,7 +10,7 @@ import (
 func (r SearchResponse) ToFlightDomain() ([]domain.Flight, error) {
 	flights := make([]domain.Flight, 0, len(r.Data.AvailableFlights))
 
-	for _,flight := range r.Data.AvailableFlights {
+	for _, flight := range r.Data.AvailableFlights {
 		mapped, err := mapFlight(flight)
 		if err != nil {
 			return nil, err
@@ -51,7 +51,7 @@ func mapFlight(flight FlightData) (domain.Flight, error) {
 			Timestamp: departure.Unix(),
 		},
 		Arrival: domain.Schedule{
-			Airport: flight.Route.From.Code,
+			Airport: flight.Route.To.Code,
 			City: flight.Route.To.City,
 			DateTime: arrival,
 			Timestamp: arrival.Unix(),

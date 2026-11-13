@@ -20,9 +20,11 @@ func TestClient_Search_Success(t *testing.T) {
     response, err := client.Search(context.Background(), provider.SearchRequest{})
 
     require.NoError(t, err)
-    require.NotNil(t, response)
-
-    assert.NotEmpty(t, response)
+    require.Len(t, response, 3)
+    assert.Equal(t, "GA400", response[0].FlightNumber)
+    assert.Equal(t, "Garuda Indonesia", response[0].Provider)
+    assert.Equal(t, "CGK", response[0].Departure.Airport)
+    assert.Equal(t, "DPS", response[0].Arrival.Airport)
 }
 
 func TestClient_Search_ContextCancelled(t *testing.T) {
