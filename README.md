@@ -16,12 +16,16 @@ The current implementation uses local JSON fixtures to simulate airline provider
 - Supports filtering by price, number of maximum stops, airline, total duration, and local departure/arrival time.
 - Supports sorting by price, duration, departure time, arrival time, and best value (score by price and duration).
 - Caches complete aggregated provider results in memory for five minutes.
+- Applies per-IP rate limiting to protect the API from excessive requests.
+- Returns HTTP 429 Too Many Requests when a client exceeds its rate limit.
 
 ## Tech stack
 
 - Go
 - Standard library `net/http` for the HTTP API
 - `context` for request cancellation and timeouts
+- `golang.org/x/time/rate` for token-bucket rate limiting
+- `sync.Mutex` for thread-safe access to the per-IP limiter map
 - `sync.RWMutex` for concurrent in-memory cache access
 - `go:embed` for bundling mock provider JSON fixtures
 - `testify` for tests
@@ -39,6 +43,7 @@ The current implementation uses local JSON fixtures to simulate airline provider
 │   ├── cache/            # In-memory cache with TTL and lazy expiration
 │   ├── domain/           # Shared flight and airport models
 │   ├── handler/          # HTTP handler, query parsing, validation, response DTOs
+│   ├── middleware/       # HTTP middleware, including per-IP rate limiting
 │   ├── provider/         # Provider interface and provider-specific clients/mappers
 │   │   ├── airasia/
 │   │   ├── batikair/
@@ -167,17 +172,46 @@ The metadata fields mean:
 
 The handler currently returns `400 Bad Request` for invalid query parameters and `503 Service Unavailable` when the search service returns an error (including when all providers fail).
 
+## Rate limiting
+
+The API uses an in-memory, per-IP token-bucket rate limiter implemented with `golang.org/x/time/rate`.
+
+### Configuration
+
+| Setting | Current value |
+|---|---:|
+| Rate limit | 1 request per second per IP |
+| Burst capacity | 10 requests per IP |
+| Inactive client cleanup interval | 1 minute |
+| Inactive client retention | 10 minutes |
+
+Each IP address has its own token bucket.
+
+- Each bucket starts with 10 tokens.
+- Every accepted request consumes one token.
+- Tokens are replenished at a rate of one token per second, up to the maximum capacity of 10.
+- Requests are rejected immediately with HTTP `429 Too Many Requests` when no tokens are available.
+- Inactive client limiter entries are periodically removed to prevent the in-memory map from growing indefinitely.
+
+The rate limiter controls request admission frequency, not the number of requests executing concurrently.
+
+The rate limiter is process-local. In a multi-instance deployment, each application instance maintains its own limiter state, so the effective limit can be higher when requests are distributed across instances. A shared rate-limiting store would be needed for a consistent global per-IP limit.
+
+Clients sharing the same public IP address also share the same rate limit. When deployed behind a reverse proxy, client IP extraction must be configured carefully to avoid trusting spoofed forwarding headers.
+
 ## Architecture and request flow
 
-1. The HTTP handler parses and validates the search query and filter/sort parameters.
-2. The handler creates an overall request context with a three-second timeout.
-3. The search service creates a cache key from the provider search request (origin, destination, dates, passenger count, and cabin class).
-4. On a cache hit, the service retrieves a copy of the cached aggregated result. On a cache miss, it calls the aggregator.
-5. The aggregator calls all configured providers concurrently.
-6. Each provider call gets a one-second timeout. A failed call is retried once after a 100 ms backoff, unless the overall request context has been cancelled or expired.
-7. Successful provider results are combined. If some providers fail, results from the successful providers are still returned. If every provider fails, the aggregator returns an error.
-8. Complete aggregated results (with no failed providers) are cached for five minutes.
-9. The service applies the requested filters and sorting to the aggregated result and returns it to the handler.
+1. Incoming HTTP requests pass through the per-IP rate limiter middleware.
+2. The middleware identifies the client's IP address and checks whether the request is allowed by that IP's token bucket. Requests exceeding the limit receive 429 Too Many Requests.
+3. Allowed requests reach the HTTP handler, which parses and validates the search query and filter/sort parameters.
+4. The handler creates an overall request context with a three-second timeout.
+5. The search service creates a cache key from the provider search request (origin, destination, dates, passenger count, and cabin class).
+6. On a cache hit, the service retrieves a copy of the cached aggregated result. On a cache miss, it calls the aggregator.
+7. The aggregator calls all configured providers concurrently.
+8. Each provider call gets a one-second timeout. A failed call is retried once after a 100 ms backoff, unless the overall request context has been cancelled or expired.
+9. Successful provider results are combined. If some providers fail, results from the successful providers are still returned. If every provider fails, the aggregator returns an error.
+10. Complete aggregated results (with no failed providers) are cached for five minutes.
+11. The service applies the requested filters and sorting to the aggregated result and returns it to the handler.
 
 ### Timeout and retry configuration
 
