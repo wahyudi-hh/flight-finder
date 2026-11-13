@@ -51,57 +51,57 @@ func (r FlightSearchRequest) ToFilter(query url.Values) (search.FlightFilter, er
 
 	if value := query.Get("minPrice"); value != "" {
 		price, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
+		if err != nil || price < 0 {
 			return filter, fmt.Errorf("minPrice must be a non-negative integer")
 		}
 		filter.MinPrice = &price
 	}
 	if value := query.Get("maxPrice"); value != "" {
-        price, err := strconv.ParseInt(value, 10, 64)
-        if err != nil || price < 0 {
-            return filter, fmt.Errorf("maxPrice must be a non-negative integer")
-        }
-        filter.MaxPrice = &price
-    }
-    if filter.MinPrice != nil && filter.MaxPrice != nil && *filter.MinPrice > *filter.MaxPrice {
-        return filter, fmt.Errorf("min_price cannot exceed max_price")
-    }
+		price, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || price < 0 {
+			return filter, fmt.Errorf("maxPrice must be a non-negative integer")
+		}
+		filter.MaxPrice = &price
+	}
+	if filter.MinPrice != nil && filter.MaxPrice != nil && *filter.MinPrice > *filter.MaxPrice {
+		return filter, fmt.Errorf("min_price cannot exceed max_price")
+	}
 
 	if value := query.Get("maxStops"); value != "" {
-        stops, err := strconv.Atoi(value)
-        if err != nil || stops < 0 {
-            return filter, fmt.Errorf("maxStops must be a non-negative integer")
-        }
-        filter.MaxStops = &stops
-    }
+		stops, err := strconv.Atoi(value)
+		if err != nil || stops < 0 {
+			return filter, fmt.Errorf("maxStops must be a non-negative integer")
+		}
+		filter.MaxStops = &stops
+	}
 
 	if value := query.Get("maxDuration"); value != "" {
-        duration, err := strconv.Atoi(value)
-        if err != nil || duration < 0 {
-            return filter, fmt.Errorf("maxDuration must be a non-negative integer")
-        }
-        filter.MaxDurationMinutes = &duration
-    }
+		duration, err := strconv.Atoi(value)
+		if err != nil || duration < 0 {
+			return filter, fmt.Errorf("maxDuration must be a non-negative integer")
+		}
+		filter.MaxDurationMinutes = &duration
+	}
 
-    if value := query.Get("airlines"); value != "" {
-        filter.Airlines = strings.Split(value, ",")
-    }
+	if value := query.Get("airlines"); value != "" {
+		filter.Airlines = strings.Split(value, ",")
+	}
 
 	if value := query.Get("departure_time_from"); value != "" {
-        filter.DepartureTimeFrom = &value
-    }
-    if value := query.Get("departure_time_to"); value != "" {
-        filter.DepartureTimeTo = &value
-    }
+		filter.DepartureTimeFrom = &value
+	}
+	if value := query.Get("departure_time_to"); value != "" {
+		filter.DepartureTimeTo = &value
+	}
 
-    if value := query.Get("arrival_time_from"); value != "" {
-        filter.ArrivalTimeFrom = &value
-    }
-    if value := query.Get("arrival_time_to"); value != "" {
-        filter.ArrivalTimeTo = &value
-    }
+	if value := query.Get("arrival_time_from"); value != "" {
+		filter.ArrivalTimeFrom = &value
+	}
+	if value := query.Get("arrival_time_to"); value != "" {
+		filter.ArrivalTimeTo = &value
+	}
 
-    return filter, nil
+	return filter, nil
 }
 
 func (r FlightSearchRequest) ToSort(query url.Values) (search.FlightSort, error) {
@@ -115,13 +115,13 @@ func (r FlightSearchRequest) ToSort(query url.Values) (search.FlightSort, error)
 		sortOrder = string(search.Ascending)
 	}
 
-	sort := search.FlightSort {
+	sort := search.FlightSort{
 		By: search.SortBy(sortBy),
 		Order: search.SortOrder(sortOrder),
 	}
 
 	if !sort.IsValid() {
-		return search.FlightSort{}, fmt.Errorf("invalid sorting parameter(s)")		
+		return search.FlightSort{}, fmt.Errorf("invalid sorting parameter(s)")
 	}
 	return sort, nil
 }

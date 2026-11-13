@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-type FlightHandler struct{
+type FlightHandler struct {
 	service *service.FlightSearchService
 }
 
@@ -21,7 +21,7 @@ func NewFlightHandler(service *service.FlightSearchService) *FlightHandler {
 func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
-	request := FlightSearchRequest {
+	request := FlightSearchRequest{
 		Origin: query.Get("origin"),
 		Destination: query.Get("destination"),
 		DepartureDate: query.Get("departureDate"),
@@ -32,16 +32,16 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 	passengers, err := strconv.Atoi(query.Get("passengers"))
 	if err != nil {
 		http.Error(w, "passengers must be a valid integer", http.StatusBadRequest)
-        return
+		return
 	}
 	request.Passengers = passengers
 
 	if err := request.Validate(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-        return
+		return
 	}
 
-	searchRequest := provider.SearchRequest {
+	searchRequest := provider.SearchRequest{
 		Origin: request.Origin,
 		Destination: request.Destination,
 		DepartureDate: request.DepartureDate,
@@ -60,18 +60,19 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 	sort, err := request.ToSort(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return		
+		return
 	}
 
 	result, searchTimeMs, cacheHit, err := h.service.Search(r.Context(), searchRequest, filter, sort)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 
-	response := FlightSearchResponse {
+	response := FlightSearchResponse{
 		SearchCriteria: request,
 		Metadata: SearchMetadata{
 			TotalResults: len(result.Flights),
