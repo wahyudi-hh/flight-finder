@@ -4,6 +4,7 @@ import (
 	"flight-finder/internal/aggregator"
 	"flight-finder/internal/cache"
 	"flight-finder/internal/handler"
+	"flight-finder/internal/middleware"
 	"flight-finder/internal/provider/airasia"
 	"flight-finder/internal/provider/batikair"
 	"flight-finder/internal/provider/garuda"
@@ -14,7 +15,6 @@ import (
 )
 
 func main() {
-	mux := http.NewServeMux()
 
 	flightAggregator := aggregator.NewAggregator(
 		airasia.NewClient(),
@@ -29,11 +29,15 @@ func main() {
 
 	flightHandler := handler.NewFlightHandler(flightService)
 
+	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/flights/search", flightHandler.Search)
+
+	rateLimiter := middleware.NewIPRateLimiter(1, 10)
+	httpHandler := rateLimiter.Middleware(mux)
 
 	server := &http.Server{
 		Addr: ":8080",
-		Handler: mux,
+		Handler: httpHandler,
 	}
 
 	log.Println("Server listening on :8080")
