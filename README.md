@@ -58,7 +58,7 @@ The current implementation uses local JSON fixtures to simulate airline provider
 
 ## Requirements
 
-- Go version **1.25.5** (as declared in `go.mod`)
+- Go version **1.26.0** (as declared in `go.mod`)
 
 ## Run locally
 
